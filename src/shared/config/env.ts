@@ -1,7 +1,7 @@
-const apiUrl = import.meta.env.VITE_API_URL
+﻿const apiUrl = import.meta.env.VITE_API_URL
 
 if (!apiUrl) {
-  throw new Error('VITE_API_URL nao foi configurada.')
+  throw new Error('VITE_API_URL não foi configurada.')
 }
 
 export const env = {

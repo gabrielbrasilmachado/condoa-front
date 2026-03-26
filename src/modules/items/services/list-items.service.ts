@@ -1,7 +1,12 @@
-import { api } from '@/shared/lib/http/api'
-import type { Item } from '@/modules/items/types/item.types'
+﻿import { api } from '@/shared/lib/http/api'
+import type {
+  ListItemsParams,
+  ListItemsResponse,
+} from '@/modules/items/types/item.types'
 
-export async function listItems() {
-  const { data } = await api.get<Item[]>('/items')
+export async function listItems(params: ListItemsParams) {
+  const { data } = await api.get<ListItemsResponse>('/items', {
+    params,
+  })
   return data
 }

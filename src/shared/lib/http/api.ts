@@ -1,16 +1,11 @@
 import axios from 'axios'
 import { env } from '@/shared/config/env'
 
-export const api = axios.create({
+const defaultConfig = {
   baseURL: env.apiUrl,
-})
+  withCredentials: true,
+}
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('condoa:token')
+export const api = axios.create(defaultConfig)
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-
-  return config
-})
+export const authApi = axios.create(defaultConfig)

@@ -56,9 +56,10 @@ Itens de composicao da aplicacao ficam em `src/app`:
 ## Fluxo de autenticacao
 
 - O login usa `React Hook Form + Zod`.
-- O token JWT fica em `localStorage`.
-- O `AuthContext` mantem o usuario autenticado no front.
-- O cliente `axios` injeta o token automaticamente.
+- O `accessToken` fica em memoria.
+- O `refreshToken` fica em cookie HttpOnly.
+- O `AuthContext` tenta `refresh` ao recarregar a aplicacao.
+- O cliente `axios` injeta o token automaticamente e tenta repetir requests apos `refresh`.
 - O `RequireAuth` protege as rotas privadas.
 
 ## Gerenciador de pacotes
@@ -79,6 +80,21 @@ Itens de composicao da aplicacao ficam em `src/app`:
 - `/users`
 - `/condominiums`
 - `/addresses`
+
+## Regras de responsividade
+
+- No desktop, a navegacao principal usa sidebar fixa.
+- No mobile, a navegacao principal usa drawer.
+- A tela de login permanece em coluna unica em qualquer breakpoint.
+- Formularios complexos devem ser divididos em blocos de secao quando fizer sentido.
+- Formularios podem usar duas colunas no desktop e devem usar uma coluna no mobile.
+- Listagens em grid de cards devem usar 1 coluna no mobile e ate 3 colunas no desktop.
+
+## Componentes compartilhados para layout
+
+- `FormSection`: bloco visual para secoes de formulario.
+- `ResponsiveFormGrid`: grid responsivo de formulario com 1 coluna no mobile e 2 no desktop.
+- `ResponsiveCardGrid`: grid responsivo de cards com 1 a 3 colunas.
 
 ## Como expandir os modulos
 

@@ -1,73 +1,85 @@
-import {
+﻿import {
   createContext,
   useEffect,
   useState,
   type PropsWithChildren,
 } from 'react'
+import {
+  clearAccessToken,
+  setAccessToken,
+} from '@/modules/auth/lib/auth-session'
+import { registerAuthInterceptors } from '@/modules/auth/lib/register-auth-interceptors'
 import type { LoginFormData } from '@/modules/auth/schemas/loginSchema'
-import { getMe, login } from '@/modules/auth/services/auth.service'
+import {
+  getMe,
+  login,
+  logout,
+  refreshSession,
+} from '@/modules/auth/services/auth.service'
 import type { AuthUser } from '@/modules/auth/types/auth.types'
+import { queryClient } from '@/shared/lib/react-query/query-client'
 
 type AuthContextData = {
   user: AuthUser | null
   isAuthenticated: boolean
   isBootstrapping: boolean
   signIn: (payload: LoginFormData) => Promise<void>
-  signOut: () => void
+  signOut: () => Promise<void>
+  updateCurrentUser: (user: AuthUser) => void
 }
 
 export const AuthContext = createContext<AuthContextData | null>(null)
 
-const TOKEN_KEY = 'condoa:token'
-const USER_KEY = 'condoa:user'
-
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    const stored = localStorage.getItem(USER_KEY)
-
-    if (!stored) {
-      return null
-    }
-
-    return JSON.parse(stored) as AuthUser
-  })
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [isBootstrapping, setIsBootstrapping] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY)
+    const removeInterceptors = registerAuthInterceptors(() => {
+      clearSession()
+    })
 
-    if (!token) {
-      setIsBootstrapping(false)
-      return
-    }
+    return removeInterceptors
+  }, [])
 
-    void getMe()
-      .then((currentUser) => {
+  useEffect(() => {
+    void refreshSession()
+      .then(async (session) => {
+        setAccessToken(session.accessToken)
+        const currentUser = await getMe()
         setUser(currentUser)
-        localStorage.setItem(USER_KEY, JSON.stringify(currentUser))
       })
       .catch(() => {
-        localStorage.removeItem(TOKEN_KEY)
-        localStorage.removeItem(USER_KEY)
-        setUser(null)
+        clearSession()
       })
       .finally(() => {
         setIsBootstrapping(false)
       })
   }, [])
 
+  function clearSession() {
+    clearAccessToken()
+    setUser(null)
+    queryClient.clear()
+  }
+
   async function signIn(payload: LoginFormData) {
     const response = await login(payload)
 
-    localStorage.setItem(TOKEN_KEY, response.accessToken)
-    localStorage.setItem(USER_KEY, JSON.stringify(response.user))
+    setAccessToken(response.accessToken)
     setUser(response.user)
   }
 
-  function signOut() {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    setUser(null)
+  async function signOut() {
+    try {
+      await logout()
+    } finally {
+      clearSession()
+    }
+  }
+
+  function updateCurrentUser(nextUser: AuthUser) {
+    setUser(nextUser)
   }
 
   return (
@@ -78,6 +90,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         isBootstrapping,
         signIn,
         signOut,
+        updateCurrentUser,
       }}
     >
       {children}
