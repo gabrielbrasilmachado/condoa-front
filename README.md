@@ -109,11 +109,3 @@ src/modules/items/
   services/
   types/
 ```
-
-## Proximos passos sugeridos
-
-1. Instalar as dependencias com `yarn`.
-2. Criar o layout definitivo do painel.
-3. Implementar o modulo `auth` completo com persistencia e feedback de sessao.
-4. Construir o CRUD de `categories`, `users`, `condominiums` e `addresses`.
-5. Evoluir `items` com filtros, cadastro, edicao e upload de imagens.
