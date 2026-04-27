@@ -20,7 +20,7 @@ import type { Item, ItemStatus } from '@/modules/items/types/item.types'
 import { AppPagination } from '@/shared/components/AppPagination'
 import { AppSelect } from '@/shared/components/AppSelect'
 import { EmptyState } from '@/shared/components/EmptyState'
-import { LoadingState } from '@/shared/components/LoadingState'
+import { ItemGridSkeleton } from '@/modules/items/components/ItemGridSkeleton'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { ResponsiveCardGrid } from '@/shared/components/ResponsiveCardGrid'
 import { toaster } from '@/shared/components/ui/toaster'
@@ -61,6 +61,10 @@ export function MyItemsPage() {
   const response = itemsQuery.data
   const isDonateDialogOpen = Boolean(itemToDonate)
   const hasCondominiumAssigned = Boolean(user?.condominium_id)
+  const isInitialLoading =
+    (itemsQuery.isLoading && !response) ||
+    (isLoadingCategories && !categoriesData)
+  const isRefreshing = itemsQuery.isFetching && Boolean(response)
   const donateButtonLabel = useMemo(
     () => (itemToDonate?.status === 'donated' ? 'Item já doado' : 'Marcar como doado'),
     [itemToDonate],
@@ -82,10 +86,6 @@ export function MyItemsPage() {
     } catch (error) {
       toaster.error({ title: getErrorMessage(error) })
     }
-  }
-
-  if (itemsQuery.isLoading || isLoadingCategories) {
-    return <LoadingState />
   }
 
   return (
@@ -125,22 +125,25 @@ export function MyItemsPage() {
                       <Text mb={2} fontWeight='medium'>
                         Categoria
                       </Text>
-                      <AppSelect
-                        options={categories.map((category) => ({
-                          value: category.id,
-                          label: category.name,
-                        }))}
-                        value={filters.categoryId}
-                        placeholder='Todas as categorias'
-                        clearable
-                        onChange={(value) => {
-                          setPage(1)
-                          setFilters((current) => ({
-                            ...current,
-                            categoryId: value,
-                          }))
-                        }}
-                      />
+                      <Box opacity={isLoadingCategories && !categoriesData ? 0.72 : 1}>
+                        <AppSelect
+                          options={categories.map((category) => ({
+                            value: category.id,
+                            label: category.name,
+                          }))}
+                          value={filters.categoryId}
+                          placeholder='Todas as categorias'
+                          clearable
+                          disabled={isLoadingCategories && !categoriesData}
+                          onChange={(value) => {
+                            setPage(1)
+                            setFilters((current) => ({
+                              ...current,
+                              categoryId: value,
+                            }))
+                          }}
+                        />
+                      </Box>
                     </Box>
 
                     <Box minW={{ base: 'full', md: '220px' }}>
@@ -168,10 +171,18 @@ export function MyItemsPage() {
           </Accordion.Root>
         </Box>
 
-        {!response?.data.length ? (
+        {isInitialLoading ? (
+          <ItemGridSkeleton label='Carregando seus itens...' />
+        ) : !response?.data.length ? (
           <EmptyState message='Nenhum item seu foi encontrado com os filtros atuais.' />
         ) : (
           <>
+            {isRefreshing ? (
+              <Text color='whiteAlpha.900' fontSize='sm' fontWeight='medium'>
+                Atualizando resultados...
+              </Text>
+            ) : null}
+
             <ResponsiveCardGrid>
               {response.data.map((item) => (
                 <ItemCard

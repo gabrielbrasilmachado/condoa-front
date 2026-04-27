@@ -10,15 +10,16 @@ import {
   IconButton,
   Image,
   Link,
+  Skeleton,
   Stack,
   Text,
 } from '@chakra-ui/react'
-import { useMemo, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useItemById } from '@/modules/items/hooks/useItemById'
+import { ItemDetailsSkeleton } from '@/modules/items/components/ItemDetailsSkeleton'
 import type { ItemDetailsImage, ItemStatus } from '@/modules/items/types/item.types'
 import { EmptyState } from '@/shared/components/EmptyState'
-import { LoadingState } from '@/shared/components/LoadingState'
 import { PageHeader } from '@/shared/components/PageHeader'
 
 const itemStatusColorMap: Record<ItemStatus, 'green' | 'yellow' | 'red'> = {
@@ -59,8 +60,10 @@ export function ItemDetailsPage() {
   const navigate = useNavigate()
   const { id = '' } = useParams()
   const itemQuery = useItemById(id)
+  const imageRef = useRef<HTMLImageElement | null>(null)
   const pointerStartXRef = useRef<number | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isCurrentImageLoaded, setIsCurrentImageLoaded] = useState(false)
 
   const item = itemQuery.data
   const orderedImages = useMemo(() => sortImages(item?.images ?? []), [item?.images])
@@ -74,6 +77,48 @@ export function ItemDetailsPage() {
   const whatsappLink = item && whatsappPhone
     ? `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(whatsappMessage)}`
     : ''
+
+  useEffect(() => {
+    if (orderedImages.length === 0) {
+      setCurrentImageIndex(0)
+      return
+    }
+
+    setCurrentImageIndex((currentIndex) =>
+      currentIndex >= orderedImages.length ? 0 : currentIndex,
+    )
+  }, [orderedImages.length])
+
+  useEffect(() => {
+    setIsCurrentImageLoaded(!currentImage)
+  }, [currentImage])
+
+  useEffect(() => {
+    if (!currentImage || !imageRef.current) {
+      return
+    }
+
+    if (imageRef.current.complete) {
+      setIsCurrentImageLoaded(true)
+    }
+  }, [currentImage])
+
+  useEffect(() => {
+    if (!hasMultipleImages || orderedImages.length < 2) {
+      return
+    }
+
+    const nextImageIndex =
+      currentImageIndex === orderedImages.length - 1 ? 0 : currentImageIndex + 1
+    const nextImageUrl = orderedImages[nextImageIndex]?.url
+
+    if (!nextImageUrl) {
+      return
+    }
+
+    const image = new window.Image()
+    image.src = nextImageUrl
+  }, [currentImageIndex, hasMultipleImages, orderedImages])
 
   function showPreviousImage() {
     setCurrentImageIndex((currentIndex) =>
@@ -119,8 +164,8 @@ export function ItemDetailsPage() {
     pointerStartXRef.current = null
   }
 
-  if (itemQuery.isLoading) {
-    return <LoadingState />
+  if (itemQuery.isLoading && !item) {
+    return <ItemDetailsSkeleton />
   }
 
   if (itemQuery.isError || !item) {
@@ -161,7 +206,27 @@ export function ItemDetailsPage() {
               onPointerLeave={handlePointerCancel}
             >
               {currentImage ? (
-                <Image src={currentImage.url} alt={item.name} w='full' h='full' objectFit='cover' />
+                <Skeleton
+                  loading={!isCurrentImageLoaded}
+                  position='absolute'
+                  inset='0'
+                  borderRadius='inherit'
+                />
+              ) : null}
+
+              {currentImage ? (
+                <Image
+                  ref={imageRef}
+                  src={currentImage.url}
+                  alt={item.name}
+                  w='full'
+                  h='full'
+                  objectFit='cover'
+                  opacity={isCurrentImageLoaded ? 1 : 0}
+                  transition='opacity 0.2s ease'
+                  onLoad={() => setIsCurrentImageLoaded(true)}
+                  onError={() => setIsCurrentImageLoaded(true)}
+                />
               ) : (
                 <Text color='gray.500' fontWeight='medium'>
                   Sem imagem

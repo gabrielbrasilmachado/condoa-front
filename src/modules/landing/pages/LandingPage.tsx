@@ -1,8 +1,9 @@
-﻿import { Box, Button, Heading, Stack, Text } from '@chakra-ui/react'
+import { Box, Button, Heading, Stack, Text } from '@chakra-ui/react'
 import { Link as RouterLink } from 'react-router-dom'
 import heartImage from '@/assets/landing/imagem-coração.jpg'
 import handsImage from '@/assets/landing/imagem-mãos.avif'
 import clothesImage from '@/assets/landing/imagem-roupas.jpg'
+import { LandingCoverImage } from '@/modules/landing/components/LandingCoverImage'
 import { LandingFeatureSection } from '@/modules/landing/components/LandingFeatureSection'
 import { LandingHeader } from '@/modules/landing/components/LandingHeader'
 
@@ -67,13 +68,14 @@ export function LandingPage() {
                   </Stack>
                 </Stack>
 
-                <Box
-                  flex='0.9'
-                  minH={{ base: '280px', md: '360px', xl: 'auto' }}
-                  bgImage={`linear-gradient(180deg, rgba(2,95,157,0.12), rgba(26,131,59,0.16)), url(${heartImage})`}
-                  bgSize='cover'
-                  backgroundPosition='center'
-                />
+                <Box flex='0.9' minH={{ base: '280px', md: '360px', xl: 'auto' }}>
+                  <LandingCoverImage
+                    src={heartImage}
+                    alt='Coração representando solidariedade'
+                    loading='eager'
+                    overlay='linear-gradient(180deg, rgba(2,95,157,0.12), rgba(26,131,59,0.16))'
+                  />
+                </Box>
               </Stack>
             </Box>
           </Box>

@@ -16,7 +16,7 @@ import type { ItemStatus } from '@/modules/items/types/item.types'
 import { AppPagination } from '@/shared/components/AppPagination'
 import { AppSelect } from '@/shared/components/AppSelect'
 import { EmptyState } from '@/shared/components/EmptyState'
-import { LoadingState } from '@/shared/components/LoadingState'
+import { ItemGridSkeleton } from '@/modules/items/components/ItemGridSkeleton'
 import { PageHeader } from '@/shared/components/PageHeader'
 import { ResponsiveCardGrid } from '@/shared/components/ResponsiveCardGrid'
 
@@ -51,10 +51,10 @@ export function SearchItemsPage() {
   const categories = categoriesData ?? []
   const response = itemsQuery.data
   const hasCondominium = Boolean(user?.condominium_id)
-
-  if (itemsQuery.isLoading || isLoadingCategories) {
-    return <LoadingState />
-  }
+  const isInitialLoading =
+    (itemsQuery.isLoading && !response) ||
+    (isLoadingCategories && !categoriesData)
+  const isRefreshing = itemsQuery.isFetching && Boolean(response)
 
   return (
     <Stack gap={6}>
@@ -84,22 +84,25 @@ export function SearchItemsPage() {
                     <Text mb={2} fontWeight='medium'>
                       Categoria
                     </Text>
-                    <AppSelect
-                      options={categories.map((category) => ({
-                        value: category.id,
-                        label: category.name,
-                      }))}
-                      value={filters.categoryId}
-                      placeholder='Todas as categorias'
-                      clearable
-                      onChange={(value) => {
-                        setPage(1)
-                        setFilters((current) => ({
-                          ...current,
-                          categoryId: value,
-                        }))
-                      }}
-                    />
+                    <Box opacity={isLoadingCategories && !categoriesData ? 0.72 : 1}>
+                      <AppSelect
+                        options={categories.map((category) => ({
+                          value: category.id,
+                          label: category.name,
+                        }))}
+                        value={filters.categoryId}
+                        placeholder='Todas as categorias'
+                        clearable
+                        disabled={isLoadingCategories && !categoriesData}
+                        onChange={(value) => {
+                          setPage(1)
+                          setFilters((current) => ({
+                            ...current,
+                            categoryId: value,
+                          }))
+                        }}
+                      />
+                    </Box>
                   </Box>
 
                   <Box minW={{ base: 'full', md: '220px' }}>
@@ -127,7 +130,9 @@ export function SearchItemsPage() {
         </Accordion.Root>
       </Box>
 
-      {!response?.data.length ? (
+      {isInitialLoading ? (
+        <ItemGridSkeleton />
+      ) : !response?.data.length ? (
         <EmptyState
           message={
             hasCondominium
@@ -137,6 +142,12 @@ export function SearchItemsPage() {
         />
       ) : (
         <>
+          {isRefreshing ? (
+            <Text color='whiteAlpha.900' fontSize='sm' fontWeight='medium'>
+              Atualizando resultados...
+            </Text>
+          ) : null}
+
           <ResponsiveCardGrid>
             {response.data.map((item) => (
               <ItemCard key={item.id} item={item} />

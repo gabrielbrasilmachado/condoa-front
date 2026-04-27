@@ -7,10 +7,11 @@ import {
   HStack,
   IconButton,
   Image,
+  Skeleton,
   Stack,
   Text,
 } from '@chakra-ui/react'
-import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import type { Item, ItemStatus } from '@/modules/items/types/item.types'
 
@@ -41,6 +42,7 @@ export function ItemCard({
   showDefaultAccessAction = true,
   showOwnerName = true,
 }: ItemCardProps) {
+  const imageRef = useRef<HTMLImageElement | null>(null)
   const orderedImages = [...item.images].sort((firstImage, secondImage) => {
     if (firstImage.is_primary === secondImage.is_primary) {
       return 0
@@ -51,8 +53,34 @@ export function ItemCard({
 
   const pointerStartXRef = useRef<number | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isCurrentImageLoaded, setIsCurrentImageLoaded] = useState(false)
   const currentImage = orderedImages[currentImageIndex]
   const hasMultipleImages = orderedImages.length > 1
+
+  useEffect(() => {
+    if (orderedImages.length === 0) {
+      setCurrentImageIndex(0)
+      return
+    }
+
+    setCurrentImageIndex((currentIndex) =>
+      currentIndex >= orderedImages.length ? 0 : currentIndex,
+    )
+  }, [orderedImages.length])
+
+  useEffect(() => {
+    setIsCurrentImageLoaded(!currentImage)
+  }, [currentImage])
+
+  useEffect(() => {
+    if (!currentImage || !imageRef.current) {
+      return
+    }
+
+    if (imageRef.current.complete) {
+      setIsCurrentImageLoaded(true)
+    }
+  }, [currentImage])
 
   function showPreviousImage() {
     setCurrentImageIndex((currentIndex) =>
@@ -134,7 +162,28 @@ export function ItemCard({
           onPointerLeave={handlePointerCancel}
         >
           {currentImage ? (
-            <Image src={currentImage.url} alt={item.name} w='full' h='full' objectFit='cover' />
+            <Skeleton
+              loading={!isCurrentImageLoaded}
+              position='absolute'
+              inset='0'
+              borderRadius='inherit'
+            />
+          ) : null}
+
+          {currentImage ? (
+            <Image
+              ref={imageRef}
+              src={currentImage.url}
+              alt={item.name}
+              w='full'
+              h='full'
+              objectFit='cover'
+              loading='lazy'
+              opacity={isCurrentImageLoaded ? 1 : 0}
+              transition='opacity 0.2s ease'
+              onLoad={() => setIsCurrentImageLoaded(true)}
+              onError={() => setIsCurrentImageLoaded(true)}
+            />
           ) : (
             <Box color='gray.600' fontWeight='medium'>
               Sem imagem

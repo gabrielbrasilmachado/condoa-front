@@ -1,4 +1,5 @@
-﻿import { Box, Heading, Stack, Text } from '@chakra-ui/react'
+import { Box, Heading, Stack, Text } from '@chakra-ui/react'
+import { LandingCoverImage } from '@/modules/landing/components/LandingCoverImage'
 
 type LandingFeatureSectionProps = {
   title: string
@@ -20,14 +21,9 @@ export function LandingFeatureSection({
   sectionId,
 }: LandingFeatureSectionProps) {
   const desktopImage = (
-    <Box
-      flex='1'
-      minH={{ xl: '420px' }}
-      bgImage={`url(${imageSrc})`}
-      bgSize='cover'
-      backgroundPosition='center'
-      aria-label={imageAlt}
-    />
+    <Box flex='1' minH={{ xl: '420px' }}>
+      <LandingCoverImage src={imageSrc} alt={imageAlt} loading='lazy' />
+    </Box>
   )
 
   const desktopContent = (
@@ -58,10 +54,16 @@ export function LandingFeatureSection({
           borderRadius='3xl'
           overflow='hidden'
           position='relative'
-          bgImage={`linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.68) 100%), url(${imageSrc})`}
-          bgSize='cover'
-          backgroundPosition='center'
         >
+          <Box position='absolute' inset='0'>
+            <LandingCoverImage
+              src={imageSrc}
+              alt={imageAlt}
+              loading='lazy'
+              overlay='linear-gradient(180deg, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.68) 100%)'
+            />
+          </Box>
+
           <Stack justify='flex-end' h='full' px={6} py={8} color='white' gap={4}>
             <Text
               display='inline-flex'
