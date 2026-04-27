@@ -1,4 +1,5 @@
-import { Box, Heading, Image, Stack, Text, type ReactNode } from '@chakra-ui/react'
+import { Box, Heading, Image, Stack, Text } from '@chakra-ui/react'
+import type { ReactNode } from 'react'
 import logoImage from '@/assets/brand/logo.png'
 import { LandingHeader } from '@/modules/landing/components/LandingHeader'
 
